@@ -8,33 +8,47 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
+type GameState int
+const (
+	Start GameState = iota
+	Drawing
+	Revealing
+	Computing
+	Fourier
+	End
+)
+
 // Game implements ebiten.Game interface.
 type Game struct {
 	points			[]struct{ x, y float64}
-	revealing		bool
+	state			GameState
 	revealIndex int
 }
 
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
 func (g *Game) Update() error {
-	
-	if !g.revealing {
+	switch g.state {
+	case Start:
+		g.state = Drawing
+	case Drawing:
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
 			g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
 		}
-		
+
 		if ebiten.IsKeyPressed(ebiten.KeyN) {
-			g.revealing = true
+			g.state = Revealing
 			g.revealIndex = 1
 		}
-	} else {
+	case Revealing:
 		if  g.revealIndex<len(g.points)-1 {
 			g.revealIndex++
 		} else {
-			g.revealing = false
+			g.state = Computing
 		}
+	case Computing:
+		g.state = Drawing
 	}
 
 	return nil
@@ -49,7 +63,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	// Draw lines
 	upperLimit := 0
-	if g.revealing {
+	if g.state == Revealing {
 		upperLimit = g.revealIndex
 	}	else {
 		upperLimit = len(g.points)
@@ -63,11 +77,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
 // If you don't have to adjust the screen size with the outside size, just return a fixed size.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-    return 640, 480
+  return 640, 480
 }
 
 func main() {
 	game := &Game{}
+	game.state = Drawing
 
 	// Set the Ebiten game parameters.
 	ebiten.SetWindowTitle("Fourier Board")
