@@ -20,8 +20,9 @@ const (
 
 // Game implements ebiten.Game interface.
 type Game struct {
+	windowSize  struct{ width, height int }
 	points			[]struct{ x, y float64}
-	state			GameState
+	state				GameState
 	revealIndex int
 }
 
@@ -79,16 +80,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout takes the outside size (e.g., the window size) and returns the (logical) screen size.
 // If you don't have to adjust the screen size with the outside size, just return a fixed size.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-  return 640, 480
+  return g.windowSize.width, g.windowSize.height
 }
 
 func main() {
 	game := &Game{}
-	game.state = Drawing
+	game.state = Start
+	game.windowSize = struct{ width, height int }{1920, 1080}
 
 	// Set the Ebiten game parameters.
 	ebiten.SetWindowTitle("Fourier Board")
-	ebiten.SetWindowSize(640, 480)
+	ebiten.SetWindowResizable(true)
+	ebiten.SetWindowSize(game.windowSize.width, game.windowSize.height)
 
 	// Run the game.
 	if err := ebiten.RunGame(game); err != nil {
