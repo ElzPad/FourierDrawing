@@ -34,9 +34,11 @@ func (g *Game) Update() error {
 	case Drawing:
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
-			g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
+			dim := len(g.points)
+			if (dim==0 || float64(x)!=g.points[dim-1].x || float64(y)!=g.points[dim-1].y) {
+				g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
+			}
 		}
-
 		if ebiten.IsKeyPressed(ebiten.KeyN) {
 			g.state = Revealing
 			g.revealIndex = 1
