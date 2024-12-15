@@ -8,6 +8,7 @@ require (
 	github.com/ebitengine/purego v0.8.1 // indirect
 	github.com/hajimehoshi/ebiten/v2 v2.8.5 // indirect
 	github.com/jezek/xgb v1.1.1 // indirect
+	golang.org/x/image v0.23.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
 )
