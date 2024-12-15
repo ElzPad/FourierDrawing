@@ -1,4 +1,4 @@
-module fourier-drawer
+module fourier-drawing
 
 go 1.23.4
 
