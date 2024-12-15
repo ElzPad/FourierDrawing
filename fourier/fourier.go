@@ -12,7 +12,7 @@ type FourierElem struct {
 	Phase		float64
 }
 
-func DiscreteFourierTransform(x []int) ([]FourierElem) {
+func DiscreteFourierTransform(x []float64) ([]FourierElem) {
 	N := len(x)
 	X := make([]FourierElem, N)
 
@@ -22,8 +22,8 @@ func DiscreteFourierTransform(x []int) ([]FourierElem) {
 
 		for n:=0; n<N; n++ {
 			arg := 2 * math.Pi * float64(n) * float64(k) / float64(N);
-			re += float64(x[n]) * math.Cos(arg)
-			im -= float64(x[n]) * math.Sin(arg)
+			re += x[n] * math.Cos(arg)
+			im -= x[n] * math.Sin(arg)
 		}
 
 		freq := float64(k)
