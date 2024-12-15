@@ -3,7 +3,7 @@ package main
 import (
 	"image/color"
 	"log"
-	
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
@@ -18,9 +18,23 @@ type Game struct {
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
 func (g *Game) Update() error {
+	
+	if !g.revealing {
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
-		x, y := ebiten.CursorPosition()
-		g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
+			x, y := ebiten.CursorPosition()
+			g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
+		}
+		
+		if ebiten.IsKeyPressed(ebiten.KeyN) {
+			g.revealing = true
+			g.revealIndex = 1
+		}
+	} else {
+		if  g.revealIndex<len(g.points)-1 {
+			g.revealIndex++
+		} else {
+			g.revealing = false
+		}
 	}
 
 	return nil
@@ -34,7 +48,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	lineColor := color.White
 
 	// Draw lines
-	for i:=1; i<len(g.points); i++ {
+	upperLimit := 0
+	if g.revealing {
+		upperLimit = g.revealIndex
+	}	else {
+		upperLimit = len(g.points)
+	}
+
+	for i:=1; i<upperLimit; i++ {
 		ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 	}
 }
