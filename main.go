@@ -8,6 +8,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"fourier-drawing/fourier"
 )
@@ -160,11 +161,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
 		}
 	case Fourier:
-		x, _:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
-		_, y := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
-		g.points = append(g.points, struct{ x, y float64 }{x,y})
-		ebitenutil.DrawLine(screen, x, 0, x, float64(g.windowSize.height), lineColor)
-		ebitenutil.DrawLine(screen, 0, y, float64(g.windowSize.width), y, lineColor)
+		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
+		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
+		g.points = append(g.points, struct{ x, y float64 }{x1,y2})
+
+		vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
+		vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
+		ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), lineColor)
+		ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, lineColor)
+
 		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
