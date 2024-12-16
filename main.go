@@ -28,6 +28,12 @@ type Game struct {
 	revealIndex int
 }
 
+func shiftSequence(sequence []float64, shift float64) {
+	for i:=0; i<len(sequence); i++ {
+		sequence[i] += shift
+	}
+}
+
 func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
 	steps := 20
 	dAngle := 2*math.Pi/float64(steps)
