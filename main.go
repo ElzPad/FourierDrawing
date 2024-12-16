@@ -28,6 +28,40 @@ type Game struct {
 	revealIndex int
 }
 
+func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
+	steps := 20
+	dAngle := 2*math.Pi/float64(steps)
+
+	point1 := struct{ x,y float64 }{cx+r, cy}
+	point2 := struct{ x,y float64 }{0, 0}
+	for i:=1; i<=steps; i++ {
+		point2.x = cx+r*math.Cos(dAngle*float64(i))
+		point2.y = cy+r*math.Sin(dAngle*float64(i))
+		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, lineColor)
+		point1 = point2
+	}
+}
+
+func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color) (x, y float64) {
+	steps := 100
+	dAngle := 2*math.Pi/float64(steps)
+
+	point1 := struct{ x,y float64 }{cx+radius, cy}
+	point2 := struct{ x,y float64 }{0, 0}
+	for i:=1; i<=steps; i++ {
+		point2.x = cx+radius*math.Cos(dAngle*float64(i))
+		point2.y = cy+radius*math.Sin(dAngle*float64(i))
+		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, color.Opaque)
+		point1 = point2
+	}
+
+	x = cx+radius*math.Cos(angle)
+	y = cy-radius*math.Sin(angle)
+	ebitenutil.DrawLine(screen, cx, cy, x, y, lineColor)
+
+	return x,y
+}
+
 // Required from Ebiten.
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
@@ -58,20 +92,6 @@ func (g *Game) Update() error {
 	}
 
 	return nil
-}
-
-func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
-	steps := 20
-	dAngle := 2*math.Pi/float64(steps)
-
-	point1 := struct{ x,y float64 }{cx+r, cy}
-	point2 := struct{ x,y float64 }{0, 0}
-	for i:=1; i<=steps; i++ {
-		point2.x = cx+r*math.Cos(dAngle*float64(i))
-		point2.y = cy+r*math.Sin(dAngle*float64(i))
-		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, lineColor)
-		point1 = point2
-	}
 }
 
 // Required from Ebiten.
