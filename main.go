@@ -83,7 +83,7 @@ func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourier
 		radius := cmplx.Abs(fourierSeq[k])/float64(N)
 		arg := 2 * math.Pi * float64(fourierInd) * float64(k) / float64(N) + cmplx.Phase(fourierSeq[k]) + phase;
 
-		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.White)
+		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.RGBA{150, 150, 150, 255})
 	}
 
 	return x, y
