@@ -130,7 +130,11 @@ func (g *Game) Update() error {
 		g.points = make([]struct{ x, y float64 }, 0)
 		g.state = Fourier
 	case Fourier:
-		g.state = Drawing
+		if g.fourierIndex<len(g.fourierX)-1  {
+				g.fourierIndex++
+		} else {
+			g.state = Drawing
+		}
 	}
 
 	return nil
@@ -152,6 +156,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	case Revealing:
 		for i:=1; i<g.revealIndex; i++ {
+			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
+		}
+	case Fourier:
+		x, _:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
+		_, y := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
+		g.points = append(g.points, struct{ x, y float64 }{x,y})
+		ebitenutil.DrawLine(screen, x, 0, x, float64(g.windowSize.height), lineColor)
+		ebitenutil.DrawLine(screen, 0, y, float64(g.windowSize.width), y, lineColor)
+		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
 		}
