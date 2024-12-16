@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"log"
 	"math"
+	"math/cmplx"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -71,6 +72,20 @@ func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float
 	ebitenutil.DrawLine(screen, cx, cy, x, y, lineColor)
 
 	return x,y
+}
+
+func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourierInd int, startX, startY, phase float64) (x, y float64) {
+	N := len(fourierSeq)
+	x, y = startX, startY
+
+	for k:=0; k<N; k++ {
+		radius := cmplx.Abs(fourierSeq[k])/float64(N)
+		arg := 2 * math.Pi * float64(fourierInd) * float64(k) / float64(N) + cmplx.Phase(fourierSeq[k]) + phase;
+
+		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.White)
+	}
+
+	return x, y
 }
 
 // Required from Ebiten.
