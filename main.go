@@ -63,7 +63,7 @@ func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float
 	for i:=1; i<=steps; i++ {
 		point2.x = cx+radius*math.Cos(dAngle*float64(i))
 		point2.y = cy+radius*math.Sin(dAngle*float64(i))
-		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, color.Opaque)
+		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, color.RGBA{64, 64, 64, 255})
 		point1 = point2
 	}
 
