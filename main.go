@@ -102,17 +102,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	lineColor := color.White
 
-	// Draw lines
-	upperLimit := 0
-	if g.state == Revealing {
-		upperLimit = g.revealIndex
-	}	else {
-		upperLimit = len(g.points)
-	}
-
-	for i:=1; i<upperLimit; i++ {
-		ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
-		drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
+	switch g.state {
+	case Drawing:
+		for i:=1; i<len(g.points); i++ {
+			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
+		}
+	case Revealing:
+		for i:=1; i<g.revealIndex; i++ {
+			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+			drawEmptyCircle(screen, g.points[i].x, g.points[i].y, 10, lineColor)
+		}
 	}
 }
 
