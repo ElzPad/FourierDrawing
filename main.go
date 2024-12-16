@@ -7,6 +7,8 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+
+	"fourier-drawing/fourier"
 )
 
 type GameState int
@@ -22,10 +24,13 @@ const (
 // Required from Ebiten.
 // Game implements ebiten.Game interface.
 type Game struct {
-	windowSize  struct{ width, height int }
-	points			[]struct{ x, y float64}
-	state				GameState
-	revealIndex int
+	windowSize  				struct{ width, height int }
+	points							[]struct{ x, y float64}
+	state								GameState
+	revealIndex 				int
+	fourierX						[]complex128
+	fourierY						[]complex128
+	fourierIndex				int
 }
 
 func shiftSequence(sequence []float64, shift float64) {
@@ -94,6 +99,22 @@ func (g *Game) Update() error {
 			g.state = Computing
 		}
 	case Computing:
+		pointsLen := len(g.points)
+		sequenceX := make([]float64, pointsLen)
+		sequenceY := make([]float64, pointsLen)
+		for i:=0; i<pointsLen; i++ {
+			sequenceX[i] = g.points[i].x
+			sequenceY[i] = g.points[i].y
+		}
+		shiftSequence(sequenceX, float64(-g.windowSize.width)/2)
+		shiftSequence(sequenceY, float64(-g.windowSize.height)/2)
+		g.fourierX = fourier.DiscreteFourierTransform(sequenceX)
+		g.fourierY = fourier.DiscreteFourierTransform(sequenceY)
+
+		g.fourierIndex = 0
+		g.points = make([]struct{ x, y float64 }, 0)
+		g.state = Fourier
+	case Fourier:
 		g.state = Drawing
 	}
 
