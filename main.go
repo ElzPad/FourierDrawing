@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"image/color"
 	"log"
 	"math"
@@ -9,6 +10,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/math/fixed"
 
 	"fourier-drawing/fourier"
 )
@@ -45,6 +50,30 @@ func shiftSequence(sequence []float64, shift float64) {
 	for i:=0; i<len(sequence); i++ {
 		sequence[i] += shift
 	}
+}
+
+func drawButton(screen *ebiten.Image, button *Button) {
+	borderColor := color.RGBA{255, 255, 255, 255}
+	borderWidth := 5.0
+	ebitenutil.DrawRect(screen, button.x-borderWidth, button.y-borderWidth, button.width+2*borderWidth, button.height+2*borderWidth, borderColor)
+
+	buttonColor := color.RGBA{0, 0, 0, 255}
+	ebitenutil.DrawRect(screen, button.x, button.y, button.width, button.height, buttonColor)
+
+	fontFace := basicfont.Face7x13
+	textWidth := len(button.text) * 7
+	textHeight := 13
+
+	textX := int(button.x) + (int(button.width)-textWidth)/2
+	textY := int(button.y) + (int(button.height)-textHeight)/2
+
+	d := &font.Drawer{
+		Dst:  screen,
+		Src:  image.NewUniform(color.White),
+		Face: fontFace,
+		Dot:  fixed.P(textX, textY),
+	}
+	d.DrawString(button.text)
 }
 
 func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
