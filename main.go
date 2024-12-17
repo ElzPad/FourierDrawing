@@ -31,8 +31,15 @@ const (
 type Button struct {
 	x, y, width, height float64
 	text                string
-	onClick             func()
+	onClick             func(g *Game)
 }
+
+type ButtonIndex int
+const (
+	StartButton ButtonIndex = iota
+	ClearButton
+	FourierButton
+)
 
 // Required from Ebiten.
 // Game implements ebiten.Game interface.
@@ -44,6 +51,7 @@ type Game struct {
 	fourierX						[]complex128
 	fourierY						[]complex128
 	fourierIndex				int
+	buttons							[]*Button
 }
 
 func shiftSequence(sequence []float64, shift float64) {
