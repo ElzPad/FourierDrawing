@@ -20,7 +20,8 @@ import (
 
 type GameState int
 const (
-	Start GameState = iota
+	Preparing GameState = iota
+	Start
 	Drawing
 	Revealing
 	Computing
@@ -147,6 +148,18 @@ func (b *Button) CheckIfClicked(g *Game) {
 // Update is called every tick (1/60 [s] by default).
 func (g *Game) Update() error {
 	switch g.state {
+	case Preparing:
+		g.buttons = append(g.buttons, &Button{835.0, 490.0, 250.0, 100.0, "Start drawing", func (g *Game) {
+			g.state = Drawing
+		}})
+		g.buttons = append(g.buttons, &Button{1650.0, 10.0, 250.0, 100.0, "Clear", func (g *Game) {
+			g.points = make([]struct{ x, y float64 }, 0)
+		}})
+		g.buttons = append(g.buttons, &Button{1650.0, 900.0, 250.0, 100.0, "Draw with Fourier", func (g *Game) {
+			g.state = Revealing
+			g.fourierIndex = 1
+		}})
+		g.state = Start
 	case Start:
 		g.state = Drawing
 	case Drawing:
@@ -236,7 +249,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	game := &Game{}
-	game.state = Start
+	game.state = Preparing
 	game.windowSize = struct{ width, height int }{1920, 1080}
 
 	// Set the Ebiten game parameters.
