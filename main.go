@@ -132,6 +132,16 @@ func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourier
 	return x, y
 }
 
+func (b *Button) CheckIfClicked(g *Game) {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		tempX, tempY := ebiten.CursorPosition()
+		mouseX, mouseY := float64(tempX), float64(tempY)
+		if mouseX>=b.x && mouseX<=b.x+b.width && mouseY>=b.y && mouseY<=b.y+b.height {
+			(*b).onClick(g)
+		}
+	}
+}
+
 // Required from Ebiten.
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
