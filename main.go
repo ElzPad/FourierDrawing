@@ -161,7 +161,7 @@ func (g *Game) Update() error {
 		}})
 		g.state = Start
 	case Start:
-		g.state = Drawing
+		g.buttons[StartButton].CheckIfClicked(g)
 	case Drawing:
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
@@ -181,6 +181,7 @@ func (g *Game) Update() error {
 			g.state = Computing
 		}
 	case Computing:
+		g.points = g.points[1:]
 		pointsLen := len(g.points)
 		sequenceX := make([]float64, pointsLen)
 		sequenceY := make([]float64, pointsLen)
@@ -216,8 +217,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	lineColor := color.White
 
 	switch g.state {
+	case Start:
+		drawButton(screen, g.buttons[StartButton])
 	case Drawing:
-		for i:=1; i<len(g.points); i++ {
+		for i:=2; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 		}
 	case Revealing:
