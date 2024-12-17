@@ -163,16 +163,15 @@ func (g *Game) Update() error {
 	case Start:
 		g.buttons[StartButton].CheckIfClicked(g)
 	case Drawing:
+		g.buttons[ClearButton].CheckIfClicked(g)
+		g.buttons[FourierButton].CheckIfClicked(g)
+
 		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
 			dim := len(g.points)
 			if (dim==0 || float64(x)!=g.points[dim-1].x || float64(y)!=g.points[dim-1].y) {
 				g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
 			}
-		}
-		if ebiten.IsKeyPressed(ebiten.KeyN) {
-			g.state = Revealing
-			g.revealIndex = 1
 		}
 	case Revealing:
 		if  g.revealIndex<len(g.points)-1 {
@@ -223,6 +222,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for i:=2; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 		}
+		drawButton(screen, g.buttons[ClearButton])
+		drawButton(screen, g.buttons[FourierButton])
 	case Revealing:
 		for i:=1; i<g.revealIndex; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
