@@ -23,6 +23,12 @@ const (
 	End
 )
 
+type Button struct {
+	x, y, width, height float64
+	text                string
+	onClick             func()
+}
+
 // Required from Ebiten.
 // Game implements ebiten.Game interface.
 type Game struct {
