@@ -33,6 +33,7 @@ type Button struct {
 	x, y, width, height float64
 	text                string
 	onClick             func(g *Game)
+	pressed							bool
 }
 
 type ButtonIndex int
@@ -133,14 +134,25 @@ func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourier
 	return x, y
 }
 
-func (b *Button) CheckIfClicked(g *Game) {
+func (b *Button) CheckIfClicked(g *Game) (pressed bool) {
+	pressed = false
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		tempX, tempY := ebiten.CursorPosition()
+		mouseX, mouseY := float64(tempX), float64(tempY)
+		if mouseX>=b.x && mouseX<=b.x+b.width && mouseY>=b.y && mouseY<=b.y+b.height {
+			b.pressed = true
+			pressed = true
+		}
+	} else if b.pressed {
 		tempX, tempY := ebiten.CursorPosition()
 		mouseX, mouseY := float64(tempX), float64(tempY)
 		if mouseX>=b.x && mouseX<=b.x+b.width && mouseY>=b.y && mouseY<=b.y+b.height {
 			(*b).onClick(g)
 		}
+		b.pressed = false
+		pressed = true
 	}
+	return pressed
 }
 
 // Required from Ebiten.
@@ -151,22 +163,23 @@ func (g *Game) Update() error {
 	case Preparing:
 		g.buttons = append(g.buttons, &Button{835.0, 490.0, 250.0, 100.0, "Start drawing", func (g *Game) {
 			g.state = Drawing
-		}})
+		}, false})
 		g.buttons = append(g.buttons, &Button{1650.0, 10.0, 250.0, 100.0, "Clear", func (g *Game) {
 			g.points = make([]struct{ x, y float64 }, 0)
-		}})
+		}, false})
 		g.buttons = append(g.buttons, &Button{1650.0, 900.0, 250.0, 100.0, "Draw with Fourier", func (g *Game) {
 			g.state = Revealing
-			g.fourierIndex = 1
-		}})
+			g.revealIndex = 0
+			g.fourierIndex = 0
+		}, false})
 		g.state = Start
 	case Start:
 		g.buttons[StartButton].CheckIfClicked(g)
 	case Drawing:
-		g.buttons[ClearButton].CheckIfClicked(g)
-		g.buttons[FourierButton].CheckIfClicked(g)
+		buttonPressed := g.buttons[ClearButton].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[FourierButton].CheckIfClicked(g)
 
-		if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		if !buttonPressed && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
 			dim := len(g.points)
 			if (dim==0 || float64(x)!=g.points[dim-1].x || float64(y)!=g.points[dim-1].y) {
@@ -174,13 +187,12 @@ func (g *Game) Update() error {
 			}
 		}
 	case Revealing:
-		if  g.revealIndex<len(g.points)-1 {
+		if  g.revealIndex<len(g.points) {
 			g.revealIndex++
 		} else {
 			g.state = Computing
 		}
 	case Computing:
-		g.points = g.points[1:]
 		pointsLen := len(g.points)
 		sequenceX := make([]float64, pointsLen)
 		sequenceY := make([]float64, pointsLen)
@@ -219,7 +231,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Start:
 		drawButton(screen, g.buttons[StartButton])
 	case Drawing:
-		for i:=2; i<len(g.points); i++ {
+		for i:=1; i<len(g.points)-1; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 		}
 		drawButton(screen, g.buttons[ClearButton])
