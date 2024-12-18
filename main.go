@@ -254,7 +254,7 @@ func (g *Game) Update() error {
 		g.state = Fourier
 	case Fourier:
 		if g.fourierIndex<len(g.fourierX)-1  {
-				g.fourierIndex++
+			g.fourierIndex++
 		} else {
 			g.state = Drawing
 		}
@@ -275,7 +275,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Start:
 		drawButton(screen, g.buttons[StartButton])
 	case Drawing:
-		for i:=1; i<len(g.points)-1; i++ {
+		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 		}
 		drawButton(screen, g.buttons[ClearButton])
