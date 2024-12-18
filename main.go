@@ -53,6 +53,7 @@ type Game struct {
 	fourierX						[]complex128
 	fourierY						[]complex128
 	fourierIndex				int
+	fourierPoints				[]struct{ x, y float64 }
 	buttons							[]*Button
 }
 
@@ -245,7 +246,7 @@ func (g *Game) Update() error {
 		g.fourierY = fourier.DiscreteFourierTransform(sequenceY)
 
 		g.fourierIndex = 0
-		g.points = make([]struct{ x, y float64 }, 0)
+		g.fourierPoints = make([]struct{ x, y float64 }, 0)
 		g.state = Fourier
 	case Fourier:
 		if g.fourierIndex<len(g.fourierX)-1  {
@@ -282,15 +283,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Fourier:
 		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
 		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
-		g.points = append(g.points, struct{ x, y float64 }{x1,y2})
+		g.fourierPoints = append(g.fourierPoints, struct{ x, y float64 }{x1,y2})
 
 		vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
 		vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
 		ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), lineColor)
 		ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, lineColor)
 
-		for i:=1; i<len(g.points); i++ {
-			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+		for i:=1; i<len(g.fourierPoints); i++ {
+			ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, lineColor)
 		}
 	}
 }
