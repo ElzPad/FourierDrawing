@@ -31,7 +31,7 @@ const (
 
 type Button struct {
 	x, y, width, height float64
-	text                string
+	text                []string
 	onClick             func(g *Game)
 	pressed							bool
 }
@@ -71,11 +71,10 @@ func drawButton(screen *ebiten.Image, button *Button) {
 	ebitenutil.DrawRect(screen, button.x, button.y, button.width, button.height, buttonColor)
 
 	fontFace := basicfont.Face7x13
-	textWidth := len(button.text) * 7
 	textHeight := 13
 
-	textX := int(button.x) + (int(button.width)-textWidth)/2
-	textY := int(button.y) + (int(button.height)-textHeight)/2
+	textX := int(button.x)+20
+	textY := int(button.y)+20
 
 	d := &font.Drawer{
 		Dst:  screen,
@@ -83,7 +82,12 @@ func drawButton(screen *ebiten.Image, button *Button) {
 		Face: fontFace,
 		Dot:  fixed.P(textX, textY),
 	}
-	d.DrawString(button.text)
+
+	for i:=0; i<len(button.text); i++ {
+		d.DrawString(button.text[i])
+		textY += textHeight
+		d.Dot = fixed.P(textX, textY)
+	}
 }
 
 func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
@@ -161,17 +165,52 @@ func (b *Button) CheckIfClicked(g *Game) (pressed bool) {
 func (g *Game) Update() error {
 	switch g.state {
 	case Preparing:
-		g.buttons = append(g.buttons, &Button{835.0, 490.0, 250.0, 100.0, "Start drawing", func (g *Game) {
-			g.state = Drawing
-		}, false})
-		g.buttons = append(g.buttons, &Button{1650.0, 10.0, 250.0, 100.0, "Clear", func (g *Game) {
-			g.points = make([]struct{ x, y float64 }, 0)
-		}, false})
-		g.buttons = append(g.buttons, &Button{1650.0, 900.0, 250.0, 100.0, "Draw with Fourier", func (g *Game) {
-			g.state = Revealing
-			g.revealIndex = 0
-			g.fourierIndex = 0
-		}, false})
+		g.buttons = append(g.buttons, &Button{775.0, 450.0, 350.0, 110.0,
+			[]string{
+				"====== ========     ||      =====   ==========",
+				"||        ||       || ||    ||   ||     ||",
+				"||        ||      ||   ||   ||    ||    ||",
+				"======    ||     =========  ======      ||",
+				"     ||   ||    ||       || ||   ||     ||",
+				"     ||   ||    ||       || ||    ||    ||",
+				"======    ||    ||       || ||     ||   ||",
+			},
+			func (g *Game) {
+				g.state = Drawing},
+			false,
+		})
+		g.buttons = append(g.buttons, &Button{1570.0, 10.0, 330.0, 110.0,
+			[]string{
+				"======  ||     ======     ||      =====   ",
+				"||      ||     ||        || ||    ||   || ",
+				"||      ||     ||       ||   ||   ||    ||",
+				"||      ||     ======  =========  ======  ",
+				"||      ||     ||     ||       || ||   || ",
+				"||      ||     ||     ||       || ||    ||",
+				"======  ====== ====== ||       || ||     |",
+			},
+			func (g *Game) {
+				g.points = make([]struct{ x, y float64 }, 0)
+			},
+			false,
+		})
+		g.buttons = append(g.buttons, &Button{1485.0, 950.0, 415.0, 110.0,
+			[]string{
+				"======   =======  ||     || =====    || ====== =====   ",
+				"||       |     |  ||     || ||   ||  || ||     ||   || ",
+				"||      ||     || ||     || ||    || || ||     ||    ||",
+				"======  ||     || ||     || ======   || ====== ======  ",
+				"||      ||     || ||     || ||   ||  || ||     ||   || ",
+				"||       |     |  ||     || ||    || || ||     ||    ||",
+				"||       =======   =======  ||     | || ====== ||     |",
+			},
+			func (g *Game) {
+				g.state = Revealing
+				g.revealIndex = 0
+				g.fourierIndex = 0
+			},
+			false,
+		})
 		g.state = Start
 	case Start:
 		g.buttons[StartButton].CheckIfClicked(g)
