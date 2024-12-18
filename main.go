@@ -43,17 +43,21 @@ const (
 	FourierButton
 )
 
+type Point struct {
+	x, y float64
+}
+
 // Required from Ebiten.
 // Game implements ebiten.Game interface.
 type Game struct {
 	windowSize  				struct{ width, height int }
-	points							[]struct{ x, y float64}
+	points							[]Point
 	state								GameState
 	revealIndex 				int
 	fourierX						[]complex128
 	fourierY						[]complex128
 	fourierIndex				int
-	fourierPoints				[]struct{ x, y float64 }
+	fourierPoints				[]Point
 	buttons							[]*Button
 }
 
@@ -95,8 +99,8 @@ func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Co
 	steps := 20
 	dAngle := 2*math.Pi/float64(steps)
 
-	point1 := struct{ x,y float64 }{cx+r, cy}
-	point2 := struct{ x,y float64 }{0, 0}
+	point1 := Point{cx+r, cy}
+	point2 := Point{0, 0}
 	for i:=1; i<=steps; i++ {
 		point2.x = cx+r*math.Cos(dAngle*float64(i))
 		point2.y = cy+r*math.Sin(dAngle*float64(i))
@@ -109,8 +113,8 @@ func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float
 	steps := 100
 	dAngle := 2*math.Pi/float64(steps)
 
-	point1 := struct{ x,y float64 }{cx+radius, cy}
-	point2 := struct{ x,y float64 }{0, 0}
+	point1 := Point{cx+radius, cy}
+	point2 := Point{0, 0}
 	for i:=1; i<=steps; i++ {
 		point2.x = cx+radius*math.Cos(dAngle*float64(i))
 		point2.y = cy+radius*math.Sin(dAngle*float64(i))
@@ -191,7 +195,7 @@ func (g *Game) Update() error {
 				"======  ====== ====== ||       || ||     |",
 			},
 			func (g *Game) {
-				g.points = make([]struct{ x, y float64 }, 0)
+				g.points = make([]Point, 0)
 			},
 			false,
 		})
@@ -223,7 +227,7 @@ func (g *Game) Update() error {
 			x, y := ebiten.CursorPosition()
 			dim := len(g.points)
 			if (dim==0 || float64(x)!=g.points[dim-1].x || float64(y)!=g.points[dim-1].y) {
-				g.points = append(g.points, struct{ x, y float64 }{float64(x), float64(y)})
+				g.points = append(g.points, Point{float64(x), float64(y)})
 			}
 		}
 	case Revealing:
@@ -246,7 +250,7 @@ func (g *Game) Update() error {
 		g.fourierY = fourier.DiscreteFourierTransform(sequenceY)
 
 		g.fourierIndex = 0
-		g.fourierPoints = make([]struct{ x, y float64 }, 0)
+		g.fourierPoints = make([]Point, 0)
 		g.state = Fourier
 	case Fourier:
 		if g.fourierIndex<len(g.fourierX)-1  {
@@ -283,7 +287,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Fourier:
 		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
 		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
-		g.fourierPoints = append(g.fourierPoints, struct{ x, y float64 }{x1,y2})
+		g.fourierPoints = append(g.fourierPoints, Point{x1,y2})
 
 		vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
 		vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
