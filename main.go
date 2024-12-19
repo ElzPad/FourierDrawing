@@ -26,13 +26,13 @@ import (
 
 type GameState int
 const (
-	Preparing GameState = iota
-	Start
-	Drawing
-	Revealing
-	Computing
-	Fourier
-	End
+	PREPARING GameState = iota
+	START
+	DRAWING
+	REVEALING
+	COMPUTING
+	FOURIER
+	END
 )
 
 type Button struct {
@@ -232,7 +232,7 @@ func (g *Game) Update() error {
 	}
 
 	switch g.state {
-	case Preparing:
+	case PREPARING:
 		g.buttons = append(g.buttons, &Button{775.0, 450.0, 350.0, 110.0,
 			[]string{
 				"====== ========     ||      =====   ==========",
@@ -244,7 +244,7 @@ func (g *Game) Update() error {
 				"======    ||    ||       || ||     ||   ||",
 			},
 			func (g *Game) {
-				g.state = Drawing},
+				g.state = DRAWING},
 			false,
 		})
 		g.buttons = append(g.buttons, &Button{1570.0, 10.0, 330.0, 110.0,
@@ -309,16 +309,16 @@ func (g *Game) Update() error {
 				"||       =======   =======  ||     | || ====== ||     |",
 			},
 			func (g *Game) {
-				g.state = Revealing
+				g.state = REVEALING
 				g.revealIndex = 0
 				g.fourierIndex = 0
 			},
 			false,
 		})
-		g.state = Start
-	case Start:
+		g.state = START
+	case START:
 		g.buttons[StartButton].CheckIfClicked(g)
-	case Drawing:
+	case DRAWING:
 		buttonPressed := g.buttons[ClearButton].CheckIfClicked(g)
 		buttonPressed = buttonPressed || g.buttons[SaveButton].CheckIfClicked(g)
 		buttonPressed = buttonPressed || g.buttons[LoadButton].CheckIfClicked(g)
@@ -331,13 +331,13 @@ func (g *Game) Update() error {
 				g.points = append(g.points, Point{float64(x), float64(y)})
 			}
 		}
-	case Revealing:
+	case REVEALING:
 		if  g.revealIndex<len(g.points) {
 			g.revealIndex++
 		} else {
-			g.state = Computing
+			g.state = COMPUTING
 		}
-	case Computing:
+	case COMPUTING:
 		pointsLen := len(g.points)
 		sequenceX := make([]float64, pointsLen)
 		sequenceY := make([]float64, pointsLen)
@@ -352,12 +352,12 @@ func (g *Game) Update() error {
 
 		g.fourierIndex = 0
 		g.fourierPoints = make([]Point, 0)
-		g.state = Fourier
-	case Fourier:
+		g.state = FOURIER
+	case FOURIER:
 		if g.fourierIndex<len(g.fourierX)-1  {
 			g.fourierIndex++
 		} else {
-			g.state = Drawing
+			g.state = DRAWING
 		}
 	}
 
@@ -373,9 +373,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	lineColor := color.White
 
 	switch g.state {
-	case Start:
+	case START:
 		drawButton(screen, g.buttons[StartButton])
-	case Drawing:
+	case DRAWING:
 		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 			if (g.toggleDots) {
@@ -386,14 +386,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		drawButton(screen, g.buttons[SaveButton])
 		drawButton(screen, g.buttons[LoadButton])
 		drawButton(screen, g.buttons[FourierButton])
-	case Revealing:
+	case REVEALING:
 		for i:=1; i<g.revealIndex; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 			if (g.toggleDots) {
 				ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
 			}
 		}
-	case Fourier:
+	case FOURIER:
 		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0, g.toggleEpicycles)
 		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2, g.toggleEpicycles)
 		g.fourierPoints = append(g.fourierPoints, Point{x1,y2})
@@ -420,7 +420,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	if (g.state!=Preparing && g.state!=Start) {
+	if (g.state!=PREPARING && g.state!=START) {
 		if (g.toggleDots) {
 			text.Draw(screen, "Points visualization: enabled", basicfont.Face7x13, 20, 20, color.White)
 		} else {
@@ -444,7 +444,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	game := &Game{}
-	game.state = Preparing
+	game.state = PREPARING
 	game.windowSize = struct{ width, height int }{1920, 1080}
 
 	// Set the Ebiten game parameters.
