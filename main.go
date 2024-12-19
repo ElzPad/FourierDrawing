@@ -1,11 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
 	"image"
 	"image/color"
 	"log"
 	"math"
 	"math/cmplx"
+	"os"
+	"strings"
+	"strconv"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -40,6 +45,8 @@ type ButtonIndex int
 const (
 	StartButton ButtonIndex = iota
 	ClearButton
+	SaveButton
+	LoadButton
 	FourierButton
 )
 
@@ -59,6 +66,57 @@ type Game struct {
 	fourierIndex				int
 	fourierPoints				[]Point
 	buttons							[]*Button
+}
+
+func writePointsToFile(points []Point) error {
+	const FILENAME string = "points.txt"
+	file, err := os.Create(FILENAME)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for _, point := range points {
+		_, err := fmt.Fprintf(file, "%f, %f\n", point.x, point.y)
+		if err != nil {
+				return err
+		}
+	}
+
+	return nil
+}
+
+func readPointsFromFile() ([]Point) {
+    const FILENAME string = "points.txt"
+    file, err := os.Open(FILENAME)
+    if err != nil {
+        return nil
+    }
+    defer file.Close()
+
+    var points []Point
+    scanner := bufio.NewScanner(file)
+
+    for scanner.Scan() {
+        line := scanner.Text()
+        parts := strings.Split(line, ",")
+        if len(parts) != 2 {
+            continue
+				}
+        x, err := strconv.ParseFloat(strings.TrimSpace(parts[0]), 64)
+        if err != nil {
+            return nil
+        }
+        y, err := strconv.ParseFloat(strings.TrimSpace(parts[1]), 64)
+        if err != nil {
+            return nil
+        }
+        points = append(points, Point{x, y})
+    }
+    if err := scanner.Err(); err != nil {
+        return nil
+    }
+    return points
 }
 
 func shiftSequence(sequence []float64, shift float64) {
@@ -199,6 +257,42 @@ func (g *Game) Update() error {
 			},
 			false,
 		})
+		g.buttons = append(g.buttons, &Button{10.0, 815.0, 320.0, 110.0,
+			[]string{
+				"======      ||     ||          || ======",
+				"||         || ||    ||        ||  ||    ",
+				"||        ||   ||    ||      ||   ||    ",
+				"======   =========    ||    ||    ======",
+				"     || ||       ||    ||  ||     ||    ",
+				"     || ||       ||     ||||      ||    ",
+				"======  ||       ||      ||       ======",
+			},
+			func (g *Game) {
+				err := writePointsToFile(g.points)
+				if (err != nil) {
+					fmt.Printf("Unable to write points to file.\n")
+				}
+			},
+			false,
+		})
+		g.buttons = append(g.buttons, &Button{10.0, 950.0, 295.0, 110.0,
+			[]string{
+				"||      =======      ||      =====    ",
+				"||      |     |     || ||    ||   ||  ",
+				"||     ||     ||   ||   ||   ||    || ",
+				"||     ||     ||  =========  ||    || ",
+				"||     ||     || ||       || ||    || ",
+				"||      |     |  ||       || ||   ||  ",
+				"======  =======  ||       || =====    ",
+			},
+			func (g *Game) {
+				g.points = readPointsFromFile()
+				if (g.points == nil) {
+					fmt.Printf("Unable to read points from file.\n")
+				}
+			},
+			false,
+		})
 		g.buttons = append(g.buttons, &Button{1485.0, 950.0, 415.0, 110.0,
 			[]string{
 				"======   =======  ||     || =====    || ====== =====   ",
@@ -221,6 +315,8 @@ func (g *Game) Update() error {
 		g.buttons[StartButton].CheckIfClicked(g)
 	case Drawing:
 		buttonPressed := g.buttons[ClearButton].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[SaveButton].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[LoadButton].CheckIfClicked(g)
 		buttonPressed = buttonPressed || g.buttons[FourierButton].CheckIfClicked(g)
 
 		if !buttonPressed && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
@@ -279,6 +375,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 		}
 		drawButton(screen, g.buttons[ClearButton])
+		drawButton(screen, g.buttons[SaveButton])
+		drawButton(screen, g.buttons[LoadButton])
 		drawButton(screen, g.buttons[FourierButton])
 	case Revealing:
 		for i:=1; i<g.revealIndex; i++ {
