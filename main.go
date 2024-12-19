@@ -61,6 +61,7 @@ type Game struct {
 	points							[]Point
 	state								GameState
 	revealIndex 				int
+	toggleDots					bool
 	fourierX						[]complex128
 	fourierY						[]complex128
 	fourierIndex				int
@@ -168,17 +169,7 @@ func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Co
 }
 
 func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color) (x, y float64) {
-	steps := 100
-	dAngle := 2*math.Pi/float64(steps)
-
-	point1 := Point{cx+radius, cy}
-	point2 := Point{0, 0}
-	for i:=1; i<=steps; i++ {
-		point2.x = cx+radius*math.Cos(dAngle*float64(i))
-		point2.y = cy+radius*math.Sin(dAngle*float64(i))
-		ebitenutil.DrawLine(screen, point1.x, point1.y, point2.x, point2.y, color.RGBA{64, 64, 64, 255})
-		point1 = point2
-	}
+	drawEmptyCircle(screen, cx, cy, radius, lineColor)	
 
 	x = cx+radius*math.Cos(angle)
 	y = cy-radius*math.Sin(angle)
@@ -226,6 +217,13 @@ func (b *Button) CheckIfClicked(g *Game) (pressed bool) {
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
 func (g *Game) Update() error {
+	if (ebiten.IsKeyPressed(ebiten.KeyC)) {
+		g.toggleDots = true
+	}
+	if (ebiten.IsKeyPressed(ebiten.KeyV)) {
+		g.toggleDots = false
+	}
+
 	switch g.state {
 	case Preparing:
 		g.buttons = append(g.buttons, &Button{775.0, 450.0, 350.0, 110.0,
@@ -373,6 +371,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Drawing:
 		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+			if (g.toggleDots) {
+				ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
+			}
 		}
 		drawButton(screen, g.buttons[ClearButton])
 		drawButton(screen, g.buttons[SaveButton])
@@ -381,6 +382,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	case Revealing:
 		for i:=1; i<g.revealIndex; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+			if (g.toggleDots) {
+				ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
+			}
 		}
 	case Fourier:
 		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
@@ -394,6 +398,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		for i:=1; i<len(g.fourierPoints); i++ {
 			ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, lineColor)
+			if (g.toggleDots) {
+				ebitenutil.DrawCircle(screen, g.fourierPoints[i].x, g.fourierPoints[i].y, 3, lineColor)
+			}
 		}
 	}
 }
