@@ -62,6 +62,7 @@ type Game struct {
 	state								GameState
 	revealIndex 				int
 	toggleDots					bool
+	toggleEpicycles			bool
 	fourierX						[]complex128
 	fourierY						[]complex128
 	fourierIndex				int
@@ -168,8 +169,10 @@ func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Co
 	}
 }
 
-func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color) (x, y float64) {
-	drawEmptyCircle(screen, cx, cy, radius, lineColor)	
+func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color, drawEpicycles bool) (x, y float64) {
+	if (drawEpicycles) {
+		drawEmptyCircle(screen, cx, cy, radius, lineColor)	
+	}
 
 	x = cx+radius*math.Cos(angle)
 	y = cy-radius*math.Sin(angle)
@@ -178,7 +181,7 @@ func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float
 	return x,y
 }
 
-func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourierInd int, startX, startY, phase float64) (x, y float64) {
+func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourierInd int, startX, startY, phase float64, drawEpicycles bool) (x, y float64) {
 	N := len(fourierSeq)
 	x, y = startX, startY
 
@@ -186,7 +189,7 @@ func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourier
 		radius := cmplx.Abs(fourierSeq[k])/float64(N)
 		arg := 2 * math.Pi * float64(fourierInd) * float64(k) / float64(N) + cmplx.Phase(fourierSeq[k]) + phase;
 
-		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.RGBA{150, 150, 150, 255})
+		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.RGBA{150, 150, 150, 255}, drawEpicycles)
 	}
 
 	return x, y
@@ -219,9 +222,12 @@ func (b *Button) CheckIfClicked(g *Game) (pressed bool) {
 func (g *Game) Update() error {
 	if (ebiten.IsKeyPressed(ebiten.KeyC)) {
 		g.toggleDots = true
-	}
-	if (ebiten.IsKeyPressed(ebiten.KeyV)) {
+	} else if (ebiten.IsKeyPressed(ebiten.KeyV)) {
 		g.toggleDots = false
+	} else if (ebiten.IsKeyPressed(ebiten.KeyD)) {
+		g.toggleEpicycles = true
+	} else if (ebiten.IsKeyPressed(ebiten.KeyF)) {
+		g.toggleEpicycles = false
 	}
 
 	switch g.state {
@@ -387,8 +393,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			}
 		}
 	case Fourier:
-		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0)
-		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
+		x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0, g.toggleEpicycles)
+		x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2, g.toggleEpicycles)
 		g.fourierPoints = append(g.fourierPoints, Point{x1,y2})
 
 		vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
