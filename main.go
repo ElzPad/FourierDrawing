@@ -44,11 +44,11 @@ type Button struct {
 
 type ButtonIndex int
 const (
-	StartButton ButtonIndex = iota
-	ClearButton
-	SaveButton
-	LoadButton
-	FourierButton
+	START_BUTTON ButtonIndex = iota
+	CLEAR_BUTTON
+	SAVE_BUTTON
+	LOAD_BUTTON
+	FOURIER_BUTTON
 )
 
 type Point struct {
@@ -317,12 +317,12 @@ func (g *Game) Update() error {
 		})
 		g.state = START
 	case START:
-		g.buttons[StartButton].CheckIfClicked(g)
+		g.buttons[START_BUTTON].CheckIfClicked(g)
 	case DRAWING:
-		buttonPressed := g.buttons[ClearButton].CheckIfClicked(g)
-		buttonPressed = buttonPressed || g.buttons[SaveButton].CheckIfClicked(g)
-		buttonPressed = buttonPressed || g.buttons[LoadButton].CheckIfClicked(g)
-		buttonPressed = buttonPressed || g.buttons[FourierButton].CheckIfClicked(g)
+		buttonPressed := g.buttons[CLEAR_BUTTON].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[SAVE_BUTTON].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[LOAD_BUTTON].CheckIfClicked(g)
+		buttonPressed = buttonPressed || g.buttons[FOURIER_BUTTON].CheckIfClicked(g)
 
 		if !buttonPressed && ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 			x, y := ebiten.CursorPosition()
@@ -374,7 +374,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	switch g.state {
 	case START:
-		drawButton(screen, g.buttons[StartButton])
+		drawButton(screen, g.buttons[START_BUTTON])
 	case DRAWING:
 		for i:=1; i<len(g.points); i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
@@ -382,10 +382,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
 			}
 		}
-		drawButton(screen, g.buttons[ClearButton])
-		drawButton(screen, g.buttons[SaveButton])
-		drawButton(screen, g.buttons[LoadButton])
-		drawButton(screen, g.buttons[FourierButton])
+		drawButton(screen, g.buttons[CLEAR_BUTTON])
+		drawButton(screen, g.buttons[SAVE_BUTTON])
+		drawButton(screen, g.buttons[LOAD_BUTTON])
+		drawButton(screen, g.buttons[FOURIER_BUTTON])
 	case REVEALING:
 		for i:=1; i<g.revealIndex; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
