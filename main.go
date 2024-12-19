@@ -400,8 +400,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
 		vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
-		ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), lineColor)
-		ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, lineColor)
+		
+		if (y2 >= 200) {
+			ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), lineColor)
+		} else {
+			ebitenutil.DrawLine(screen, x1, 0, x1, y1, lineColor)
+		}
+		if (x1 >= 200) {
+			ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, lineColor)
+		} else {
+			ebitenutil.DrawLine(screen, 0, y2, x2, y2, lineColor)
+		}
 
 		for i:=1; i<len(g.fourierPoints); i++ {
 			ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, lineColor)
