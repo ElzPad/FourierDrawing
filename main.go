@@ -14,6 +14,7 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 
 	"golang.org/x/image/font"
@@ -407,6 +408,20 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			if (g.toggleDots) {
 				ebitenutil.DrawCircle(screen, g.fourierPoints[i].x, g.fourierPoints[i].y, 3, lineColor)
 			}
+		}
+	}
+
+	if (g.state!=Preparing && g.state!=Start) {
+		if (g.toggleDots) {
+			text.Draw(screen, "Points visualization: enabled", basicfont.Face7x13, 20, 20, color.White)
+		} else {
+			text.Draw(screen, "Points visualization: disabled", basicfont.Face7x13, 20, 20, color.White)
+		}
+
+		if (g.toggleEpicycles) {
+			text.Draw(screen, "Epicycles visualization: enabled", basicfont.Face7x13, 20, 40, color.White)
+		} else {
+			text.Draw(screen, "Epicycles visualization: disabled", basicfont.Face7x13, 20, 40, color.White)
 		}
 	}
 }
