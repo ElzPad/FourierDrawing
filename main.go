@@ -332,7 +332,7 @@ func (g *Game) Update() error {
 			}
 		}
 	case REVEALING:
-		if  g.revealIndex<len(g.points) {
+		if g.revealIndex<len(g.points) && !ebiten.IsKeyPressed(ebiten.KeyS){
 			g.revealIndex++
 		} else {
 			g.state = COMPUTING
@@ -387,6 +387,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		drawButton(screen, g.buttons[LOAD_BUTTON])
 		drawButton(screen, g.buttons[FOURIER_BUTTON])
 	case REVEALING:
+		text.Draw(screen, "Click S to skip", basicfont.Face7x13, 940, 20, color.White)
 		for i:=1; i<g.revealIndex; i++ {
 			ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
 			if (g.toggleDots) {
@@ -422,15 +423,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	if (g.state!=PREPARING && g.state!=START) {
 		if (g.toggleDots) {
-			text.Draw(screen, "Points visualization: enabled", basicfont.Face7x13, 20, 20, color.White)
+			text.Draw(screen, "Points visualization: enabled      - Click V to disable", basicfont.Face7x13, 20, 20, color.White)
 		} else {
-			text.Draw(screen, "Points visualization: disabled", basicfont.Face7x13, 20, 20, color.White)
+			text.Draw(screen, "Points visualization: disabled     - Click C to enable", basicfont.Face7x13, 20, 20, color.White)
 		}
 
 		if (g.toggleEpicycles) {
-			text.Draw(screen, "Epicycles visualization: enabled", basicfont.Face7x13, 20, 40, color.White)
+			text.Draw(screen, "Epicycles visualization: enabled   - Click F to disable", basicfont.Face7x13, 20, 40, color.White)
 		} else {
-			text.Draw(screen, "Epicycles visualization: disabled", basicfont.Face7x13, 20, 40, color.White)
+			text.Draw(screen, "Epicycles visualization: disabled  - Click D to enable", basicfont.Face7x13, 20, 40, color.White)
 		}
 	}
 }
