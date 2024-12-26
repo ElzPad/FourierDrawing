@@ -64,8 +64,8 @@ type Game struct {
 	revealIndex 				int
 	toggleDots					bool
 	toggleEpicycles			bool
-	fourierX						[]complex128
-	fourierY						[]complex128
+	fourierX						[]fourier.FourierElement
+	fourierY						[]fourier.FourierElement
 	fourierIndex				int
 	fourierPoints				[]Point
 	buttons							[]*Button
@@ -182,13 +182,13 @@ func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float
 	return x,y
 }
 
-func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []complex128, fourierInd int, startX, startY, phase float64, drawEpicycles bool) (x, y float64) {
+func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []fourier.FourierElement, fourierInd int, startX, startY, phase float64, drawEpicycles bool) (x, y float64) {
 	N := len(fourierSeq)
 	x, y = startX, startY
 
 	for k:=0; k<N; k++ {
-		radius := cmplx.Abs(fourierSeq[k])/float64(N)
-		arg := 2 * math.Pi * float64(fourierInd) * float64(k) / float64(N) + cmplx.Phase(fourierSeq[k]) + phase;
+		radius := cmplx.Abs(fourierSeq[k].Val)/float64(N)
+		arg := 2 * math.Pi * float64(fourierInd) * float64(fourierSeq[k].Freq) / float64(N) + cmplx.Phase(fourierSeq[k].Val) + phase;
 
 		x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.RGBA{150, 150, 150, 255}, drawEpicycles)
 	}
@@ -347,8 +347,8 @@ func (g *Game) Update() error {
 		}
 		shiftSequence(sequenceX, float64(-g.windowSize.width)/2)
 		shiftSequence(sequenceY, float64(-g.windowSize.height)/2)
-		g.fourierX = fourier.DiscreteFourierTransform(sequenceX)
-		g.fourierY = fourier.DiscreteFourierTransform(sequenceY)
+		g.fourierX = fourier.DiscreteFourierTransform(sequenceX, true)
+		g.fourierY = fourier.DiscreteFourierTransform(sequenceY, true)
 
 		g.fourierIndex = 0
 		g.fourierPoints = make([]Point, 0)
