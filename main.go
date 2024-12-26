@@ -16,6 +16,7 @@ import (
     "github.com/hajimehoshi/ebiten/v2/ebitenutil"
     "github.com/hajimehoshi/ebiten/v2/text"
     "github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/sqweek/dialog"
 
     "golang.org/x/image/font"
     "golang.org/x/image/font/basicfont"
@@ -72,8 +73,12 @@ type Game struct {
 }
 
 func writePointsToFile(points []Point) error {
-    const FILENAME string = "points.txt"
-    file, err := os.Create(FILENAME)
+	filePath, err := dialog.File().Filter("Text files (*.txt)", "txt").Load()
+    if err != nil {
+		return err
+    }
+
+    file, err := os.Create(filePath)
     if err != nil {
         return err
     }
@@ -90,8 +95,12 @@ func writePointsToFile(points []Point) error {
 }
 
 func readPointsFromFile() ([]Point) {
-    const FILENAME string = "points.txt"
-    file, err := os.Open(FILENAME)
+    filePath, err := dialog.File().Filter("Text files (*.txt)", "txt").Load()
+    if err != nil {
+        return nil
+    }
+
+    file, err := os.Open(filePath)
     if err != nil {
         return nil
     }
