@@ -16,7 +16,7 @@ import (
     "github.com/hajimehoshi/ebiten/v2/ebitenutil"
     "github.com/hajimehoshi/ebiten/v2/text"
     "github.com/hajimehoshi/ebiten/v2/vector"
-	"github.com/sqweek/dialog"
+    "github.com/sqweek/dialog"
 
     "golang.org/x/image/font"
     "golang.org/x/image/font/basicfont"
@@ -73,9 +73,9 @@ type Game struct {
 }
 
 func writePointsToFile(points []Point) error {
-	filePath, err := dialog.File().Filter("Text files (*.txt)", "txt").Load()
+    filePath, err := dialog.File().Filter("Text files (*.txt)", "txt").Load()
     if err != nil {
-		return err
+        return err
     }
 
     file, err := os.Create(filePath)
@@ -360,7 +360,15 @@ func (g *Game) Update() error {
         g.fourierY = fourier.DiscreteFourierTransform(sequenceY, true)
 
         g.fourierIndex = 0
-        g.fourierPoints = make([]Point, 0)
+
+        sequenceX = fourier.InverseDFT(g.fourierX)
+        sequenceY = fourier.InverseDFT(g.fourierY)
+
+        g.fourierPoints = make([]Point, len(sequenceX))
+        for i:=0; i<pointsLen; i++ {
+            g.fourierPoints[i].x = sequenceX[i]+float64(g.windowSize.width)/2
+            g.fourierPoints[i].y = sequenceY[i]+float64(g.windowSize.height)/2
+        }
         g.state = FOURIER
     case FOURIER:
         if g.fourierIndex<len(g.fourierX)-1  {
@@ -379,16 +387,21 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
     screen.Fill(color.Black)
 
-    lineColor := color.White
+    color1 := color.RGBA{64, 64, 64, 64}
+    color2 := color.RGBA{192, 192, 192, 255}
+    color3 := color.RGBA{255, 255, 255, 255}
+
+    circleWidth := 3.0
+    circleWidthBold := 4.0
 
     switch g.state {
     case START:
         drawButton(screen, g.buttons[START_BUTTON])
     case DRAWING:
         for i:=1; i<len(g.points); i++ {
-            ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+            ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, color1)
             if (g.toggleDots) {
-                ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
+                ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, circleWidth, color2)
             }
         }
         drawButton(screen, g.buttons[CLEAR_BUTTON])
@@ -398,34 +411,33 @@ func (g *Game) Draw(screen *ebiten.Image) {
     case REVEALING:
         text.Draw(screen, "Click S to skip", basicfont.Face7x13, 940, 20, color.White)
         for i:=1; i<g.revealIndex; i++ {
-            ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, lineColor)
+            ebitenutil.DrawLine(screen, g.points[i-1].x, g.points[i-1].y, g.points[i].x, g.points[i].y, color1)
             if (g.toggleDots) {
-                ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, 3, lineColor)
+                ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, circleWidth, color2)
             }
         }
     case FOURIER:
-        x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 200, 0.0, g.toggleEpicycles)
+        x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 100, 0.0, g.toggleEpicycles)
         x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2, g.toggleEpicycles)
-        g.fourierPoints = append(g.fourierPoints, Point{x1,y2})
 
         vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
         vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
         
         if (y2 >= 200) {
-            ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), lineColor)
+            ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), color.White)
         } else {
-            ebitenutil.DrawLine(screen, x1, 0, x1, y1, lineColor)
+            ebitenutil.DrawLine(screen, x1, 0, x1, y1, color.White)
         }
         if (x1 >= 200) {
-            ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, lineColor)
+            ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, color.White)
         } else {
-            ebitenutil.DrawLine(screen, 0, y2, x2, y2, lineColor)
+            ebitenutil.DrawLine(screen, 0, y2, x2, y2, color.White)
         }
 
-        for i:=1; i<len(g.fourierPoints); i++ {
-            ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, lineColor)
+        for i:=1; i<g.fourierIndex; i++ {
+            ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, color1)
             if (g.toggleDots) {
-                ebitenutil.DrawCircle(screen, g.fourierPoints[i].x, g.fourierPoints[i].y, 3, lineColor)
+                ebitenutil.DrawCircle(screen, g.fourierPoints[i].x, g.fourierPoints[i].y, circleWidthBold, color3)
             }
         }
     }
