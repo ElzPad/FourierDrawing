@@ -11,6 +11,7 @@ import (
     "os"
     "strings"
     "strconv"
+    "sync"
 
     "github.com/hajimehoshi/ebiten/v2"
     "github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -268,6 +269,24 @@ func preRenderFrame(g *Game, frameIndex int) Frame {
     return Frame{ drawingLayer: drawingImage, dotsLayer: dotsImage, epicyclesLayer: epicyclesImage }
 }
 
+func preRenderBatchOfFrames(g *Game) {
+    startIndex := g.prerenderIndex
+    concurrentRender := 10
+	var wg sync.WaitGroup
+
+	worker := func(offset int) {
+		defer wg.Done()
+		g.frames[startIndex+offset] = preRenderFrame(g, startIndex+offset)
+        g.prerenderIndex++
+	}
+
+	for i:=0; i<concurrentRender && startIndex+i<len(g.frames); i++ {
+		wg.Add(1)
+		go worker(i)
+	}
+	wg.Wait()
+}
+
 // Required from Ebiten.
 // Update proceeds the game state.
 // Update is called every tick (1/60 [s] by default).
@@ -422,12 +441,14 @@ func (g *Game) Update() error {
         if g.prerenderIndex == len(g.fourierX) {
             g.state = FOURIER
         } else {
+            expandedFramesSlice := make([]Frame, len(g.fourierX))
+            copy(expandedFramesSlice, g.frames)
+            g.frames = expandedFramesSlice
             g.state = PRERENDERING
         }
     case PRERENDERING:
         if g.prerenderIndex<len(g.fourierX)  {
-            g.frames = append(g.frames, preRenderFrame(g, g.prerenderIndex))
-            g.prerenderIndex++
+            preRenderBatchOfFrames(g)
         } else {
             g.fourierIndex = 0
             g.state = FOURIER
