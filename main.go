@@ -32,6 +32,7 @@ const (
     DRAWING
     REVEALING
     COMPUTING
+    PRERENDERING
     FOURIER
     END
 )
@@ -56,13 +57,21 @@ type Point struct {
     x, y float64
 }
 
+type Frame struct {
+    drawingLayer *ebiten.Image
+    dotsLayer *ebiten.Image
+    epicyclesLayer *ebiten.Image
+}
+
 // Required from Ebiten.
 // Game implements ebiten.Game interface.
 type Game struct {
     windowSize                  struct{ width, height int }
+    frames                      []Frame        
     points                      []Point
     state                       GameState
     revealIndex                 int
+    prerenderIndex              int
     toggleDots                  bool
     toggleEpicycles             bool
     fourierX                    []fourier.FourierElement
@@ -166,7 +175,7 @@ func drawButton(screen *ebiten.Image, button *Button) {
 }
 
 func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Color) {
-    steps := 20
+    steps := 30
     dAngle := 2*math.Pi/float64(steps)
 
     point1 := Point{cx+r, cy}
@@ -179,19 +188,17 @@ func drawEmptyCircle(screen *ebiten.Image, cx, cy, r float64, lineColor color.Co
     }
 }
 
-func drawEmptyCircleWithRadius(screen *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color, drawEpicycles bool) (x, y float64) {
-    if (drawEpicycles) {
-        drawEmptyCircle(screen, cx, cy, radius, lineColor)
-    }
-
+func drawEmptyCircleWithRadius(screen1 *ebiten.Image, screen2 *ebiten.Image, cx, cy, radius, angle float64, lineColor color.Color) (x, y float64) {
+    drawEmptyCircle(screen2, cx, cy, radius, lineColor)
+    
     x = cx+radius*math.Cos(angle)
     y = cy-radius*math.Sin(angle)
-    ebitenutil.DrawLine(screen, cx, cy, x, y, lineColor)
+    ebitenutil.DrawLine(screen1, cx, cy, x, y, lineColor)
 
     return x,y
 }
 
-func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []fourier.FourierElement, fourierInd int, startX, startY, phase float64, drawEpicycles bool) (x, y float64) {
+func drawFourierEpicycles(screen1 *ebiten.Image, screen2 *ebiten.Image, fourierSeq []fourier.FourierElement, fourierInd int, startX, startY, phase float64) (x, y float64) {
     N := len(fourierSeq)
     x, y = startX, startY
 
@@ -199,7 +206,7 @@ func drawFourierEpicycles(screen *ebiten.Image, fourierSeq []fourier.FourierElem
         radius := cmplx.Abs(fourierSeq[k].Val)/float64(N)
         arg := 2 * math.Pi * float64(fourierInd) * float64(fourierSeq[k].Freq) / float64(N) + cmplx.Phase(fourierSeq[k].Val) + phase;
 
-        x, y = drawEmptyCircleWithRadius(screen, x, y, radius, arg, color.RGBA{150, 150, 150, 255}, drawEpicycles)
+        x, y = drawEmptyCircleWithRadius(screen1, screen2, x, y, radius, arg, color.RGBA{150, 150, 150, 255})
     }
 
     return x, y
@@ -224,6 +231,41 @@ func (b *Button) CheckIfClicked(g *Game) (pressed bool) {
         pressed = true
     }
     return pressed
+}
+
+func preRenderFrame(g *Game, frameIndex int) Frame {
+    color1 := color.RGBA{64, 64, 64, 64}
+    color3 := color.RGBA{255, 255, 255, 255}
+
+    circleWidthBold := 4.0
+
+    drawingImage := ebiten.NewImage(g.windowSize.width, g.windowSize.height)
+    dotsImage := ebiten.NewImage(g.windowSize.width, g.windowSize.height)
+    epicyclesImage := ebiten.NewImage(g.windowSize.width, g.windowSize.height)
+    
+    x1, y1 := drawFourierEpicycles(drawingImage, epicyclesImage, g.fourierX, frameIndex, float64(g.windowSize.width)/2 , 100, 0.0)
+    x2, y2 := drawFourierEpicycles(drawingImage, epicyclesImage, g.fourierY, frameIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2)
+
+    vector.DrawFilledCircle(drawingImage, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
+    vector.DrawFilledCircle(drawingImage, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
+    
+    if (y2 >= 200) {
+        ebitenutil.DrawLine(drawingImage, x1, y1, x1, float64(g.windowSize.height), color.White)
+    } else {
+        ebitenutil.DrawLine(drawingImage, x1, 0, x1, y1, color.White)
+    }
+    if (x1 >= 200) {
+        ebitenutil.DrawLine(drawingImage, x2, y2, float64(g.windowSize.width), y2, color.White)
+    } else {
+        ebitenutil.DrawLine(drawingImage, 0, y2, x2, y2, color.White)
+    }
+
+    for i:=1; i<frameIndex; i++ {
+        ebitenutil.DrawLine(drawingImage, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, color1)
+        ebitenutil.DrawCircle(dotsImage, g.fourierPoints[i].x, g.fourierPoints[i].y, circleWidthBold, color3)
+    }
+
+    return Frame{ drawingLayer: drawingImage, dotsLayer: dotsImage, epicyclesLayer: epicyclesImage }
 }
 
 // Required from Ebiten.
@@ -268,6 +310,8 @@ func (g *Game) Update() error {
             },
             func (g *Game) {
                 g.points = make([]Point, 0)
+                g.frames = make([]Frame, 0)
+                g.prerenderIndex = 0
             },
             false,
         })
@@ -301,6 +345,8 @@ func (g *Game) Update() error {
             },
             func (g *Game) {
                 g.points = readPointsFromFile()
+                g.frames = make([]Frame, 0)
+                g.prerenderIndex = 0
                 if (g.points == nil) {
                     fmt.Printf("Unable to read points from file.\n")
                 }
@@ -318,12 +364,15 @@ func (g *Game) Update() error {
                 "||       =======   =======  ||     | || ====== ||     |",
             },
             func (g *Game) {
-                g.state = REVEALING
-                g.revealIndex = 0
-                g.fourierIndex = 0
+                if (len(g.points)>0) {
+                    g.state = REVEALING
+                    g.revealIndex = 0
+                    g.fourierIndex = 0
+                }
             },
             false,
         })
+        g.frames = make([]Frame, 0)
         g.state = START
     case START:
         g.buttons[START_BUTTON].CheckIfClicked(g)
@@ -359,8 +408,6 @@ func (g *Game) Update() error {
         g.fourierX = fourier.DiscreteFourierTransform(sequenceX, true)
         g.fourierY = fourier.DiscreteFourierTransform(sequenceY, true)
 
-        g.fourierIndex = 0
-
         sequenceX = fourier.InverseDFT(g.fourierX)
         sequenceY = fourier.InverseDFT(g.fourierY)
 
@@ -369,7 +416,22 @@ func (g *Game) Update() error {
             g.fourierPoints[i].x = sequenceX[i]+float64(g.windowSize.width)/2
             g.fourierPoints[i].y = sequenceY[i]+float64(g.windowSize.height)/2
         }
-        g.state = FOURIER
+
+        g.fourierIndex = 0
+
+        if g.prerenderIndex == len(g.fourierX) {
+            g.state = FOURIER
+        } else {
+            g.state = PRERENDERING
+        }
+    case PRERENDERING:
+        if g.prerenderIndex<len(g.fourierX)  {
+            g.frames = append(g.frames, preRenderFrame(g, g.prerenderIndex))
+            g.prerenderIndex++
+        } else {
+            g.fourierIndex = 0
+            g.state = FOURIER
+        }
     case FOURIER:
         if g.fourierIndex<len(g.fourierX)-1  {
             g.fourierIndex++
@@ -389,10 +451,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
     color1 := color.RGBA{64, 64, 64, 64}
     color2 := color.RGBA{192, 192, 192, 255}
-    color3 := color.RGBA{255, 255, 255, 255}
 
     circleWidth := 3.0
-    circleWidthBold := 4.0
 
     switch g.state {
     case START:
@@ -416,29 +476,18 @@ func (g *Game) Draw(screen *ebiten.Image) {
                 ebitenutil.DrawCircle(screen, g.points[i].x, g.points[i].y, circleWidth, color2)
             }
         }
+    case PRERENDERING:
+        textOnScreen := fmt.Sprintf("Prerendering: %.2f%%", float64(g.prerenderIndex)/float64(len(g.fourierX))*100)
+        text.Draw(screen, textOnScreen, basicfont.Face7x13, 900, 530, color.White)
+        ebitenutil.DrawRect(screen, 760, 560, float64(g.prerenderIndex)/float64(len(g.fourierX))*400, 40, color.White)
     case FOURIER:
-        x1, y1:= drawFourierEpicycles(screen, g.fourierX, g.fourierIndex, float64(g.windowSize.width)/2 , 100, 0.0, g.toggleEpicycles)
-        x2, y2 := drawFourierEpicycles(screen, g.fourierY, g.fourierIndex, 200, float64(g.windowSize.height)/2, -math.Pi/2, g.toggleEpicycles)
+        screen.DrawImage(g.frames[g.fourierIndex].drawingLayer, nil)
 
-        vector.DrawFilledCircle(screen, float32(x1), float32(y1), float32(6.0), color.RGBA{255, 0, 0, 100}, false)
-        vector.DrawFilledCircle(screen, float32(x2), float32(y2), float32(6.0), color.RGBA{0, 255, 0, 100}, false)
-        
-        if (y2 >= 200) {
-            ebitenutil.DrawLine(screen, x1, y1, x1, float64(g.windowSize.height), color.White)
-        } else {
-            ebitenutil.DrawLine(screen, x1, 0, x1, y1, color.White)
+        if (g.toggleDots) {
+            screen.DrawImage(g.frames[g.fourierIndex].dotsLayer, nil)
         }
-        if (x1 >= 200) {
-            ebitenutil.DrawLine(screen, x2, y2, float64(g.windowSize.width), y2, color.White)
-        } else {
-            ebitenutil.DrawLine(screen, 0, y2, x2, y2, color.White)
-        }
-
-        for i:=1; i<g.fourierIndex; i++ {
-            ebitenutil.DrawLine(screen, g.fourierPoints[i-1].x, g.fourierPoints[i-1].y, g.fourierPoints[i].x, g.fourierPoints[i].y, color1)
-            if (g.toggleDots) {
-                ebitenutil.DrawCircle(screen, g.fourierPoints[i].x, g.fourierPoints[i].y, circleWidthBold, color3)
-            }
+        if (g.toggleEpicycles) {
+            screen.DrawImage(g.frames[g.fourierIndex].epicyclesLayer, nil)
         }
     }
 
